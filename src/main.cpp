@@ -8,6 +8,7 @@ using namespace std;
 const int CELL_SIZE = 5;
 const int WIDTH = 600;
 const int HEIGHT = 600;
+const int DELAY_MS = 200;
 
 bool init(SDL_Window**window, SDL_Renderer **renderer) {
   SDL_Init(SDL_INIT_EVERYTHING);
@@ -47,10 +48,12 @@ void processInput(bool *running) {
 }
 
 void update(Cell **cells, int count) {
-  SDL_Delay(250);
+  SDL_Delay(DELAY_MS);
+
   for (int i = 0; i < count; i++) {
     cells[i]->update();
   }
+
   for (int i = 0; i < count; i++) {
     cells[i]->commit();
   }
@@ -112,6 +115,18 @@ void quit(SDL_Window *window, SDL_Renderer* renderer) {
   SDL_Quit();
 }
 
+void setup(Cell **cells, int count) {
+  unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+  default_random_engine generator(seed);
+  uniform_int_distribution<int> distribution(1,10);
+
+  for (int i = 0; i < count; i++) {
+    if (distribution(generator) == 1) {
+      cells[i]->toggle();
+    }
+  }
+}
+
 int main()
 {
   int rows = HEIGHT / CELL_SIZE;
@@ -121,17 +136,9 @@ int main()
   SDL_Window* window;
   SDL_Renderer* renderer;
 
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  default_random_engine generator(seed);
-  uniform_int_distribution<int> distribution(1,10);
-
-  for (int i = 0, len = rows * cols; i < len; i++) {
-    if (distribution(generator) == 1) {
-      cells[i]->toggle();
-    }
-  }
-
   bool running = init(&window, &renderer);
+
+  setup(cells, rows * cols);
 
   while (running) {
     processInput(&running);
